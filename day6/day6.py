@@ -13,14 +13,15 @@ def num_of_ways_to_win(time, distance):
 if __name__ == "__main__":
     with open("input6.txt", "r") as f:
         lines = f.readlines()
-        times = [int(t.strip()) for t in lines[0].split("Time: ")[1].split(" ") if t.strip()]
-        distances = [int(d.strip()) for d in lines[1].split("Distance: ")[1].split(" ") if d.strip()]
+        times = [t.strip() for t in lines[0].split("Time: ")[1].split(" ") if t.strip()]
+        distances = [d.strip() for d in lines[1].split("Distance: ")[1].split(" ") if d.strip()]
 
-        total = 1
-        for time, distance in zip(times, distances):
-            n_ways = num_of_ways_to_win(time, distance)
-            print(time, distance, "=", n_ways)
-            total *= n_ways
+        time = int("".join(times))
+        distance = int("".join(distances))
+
+        n_ways = num_of_ways_to_win(time, distance)
+        print(time, distance, "=", n_ways)
+        total = n_ways
 
         print("TOTAL", total)
 
