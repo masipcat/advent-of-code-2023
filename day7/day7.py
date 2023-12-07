@@ -6,10 +6,17 @@ def count_by_card(hand):
     for c in hand:
         count[c] += 1
     sorted_count = sorted(list(count.items()), key=lambda x: x[1], reverse=True)
-    return sorted_count
+    if sorted_count[0][0] == "J" and len(sorted_count) > 1:
+        return sorted_count[1]
+    return sorted_count[0]
 
-def get_hand_type(hand):
-    hand = list(hand)
+def get_hand_type(hand, recursive=0):
+    most_repeated_card, repeated_times = count_by_card(hand)
+
+    if "J" in hand and recursive == 0:
+        hand = hand.replace("J", most_repeated_card)
+        return get_hand_type(hand, recursive+1)
+
     if all([c == hand[0] for c in hand]):
         return 7, "five_of_kind"
     elif len(set(hand)) == 2 and hand.count(hand[0]) in (1, 4):
@@ -17,21 +24,18 @@ def get_hand_type(hand):
     elif len(set(hand)) == 2 and hand.count(hand[0]) in (2, 3):
         return 5, "full_house"
     elif len(set(hand)) == 3:
-        sorted_count = count_by_card(hand)
-        if sorted_count[0][1] == 3:
+        if repeated_times == 3:
             return 4, "three_of_kind"
         else:
             return 3, "two_pair"
     elif len(set(hand)) == 4:
-        # sorted_count = count_by_card(hand)
-        # if sorted_count[0][1] == 2:
         return 2, "one_pair"
     else:
         return 1, "high_pair"
 
 
 def cmp_card(c1, c2):
-    cards = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
+    cards = ["A", "K", "Q", "T", "9", "8", "7", "6", "5", "4", "3", "2", "J"]
     c1_pos = cards.index(c1)
     c2_pos = cards.index(c2)
     if c1_pos < c2_pos:
