@@ -1,5 +1,5 @@
 from collections import defaultdict
-from functools import cmp_to_key
+from math import lcm
 
 
 if __name__ == "__main__":
@@ -15,23 +15,31 @@ if __name__ == "__main__":
             lnode, rnode = dest[1:-2].split(",")
             nodes_dict[node] = (lnode.strip(), rnode.strip())
 
-        n_moves = 0
-        current_node = "AAA"
+        start_nodes = {n: n for n in nodes_dict.keys() if n.endswith("A")}
 
-        while True:
-            if n_moves < len(moves):
-                move = moves[n_moves]
-            else:
-                move = moves[n_moves % len(moves) ]
+        print("START_NODES", start_nodes)
 
-            n_moves += 1
+        len_moves = len(moves)
 
-            if move == "R":
-                current_node = nodes_dict[current_node][1]
-            else:
-                current_node = nodes_dict[current_node][0]
+        n_moves = defaultdict(int)
+        while not all([n.endswith("Z") for n in start_nodes.values()]):
+            for current_node, end_node in start_nodes.items():
+                if end_node.endswith("Z"):
+                    continue
 
-            if current_node == "ZZZ":
-                break
+                n = n_moves[current_node]
+                if n < len_moves:
+                    move = moves[n]
+                else:
+                    move = moves[n % len_moves]
 
-        print("Total moves", n_moves)
+                if move == "R":
+                    start_nodes[current_node] = nodes_dict[end_node][1]
+                else:
+                    start_nodes[current_node] = nodes_dict[end_node][0]
+
+                n_moves[current_node] += 1
+
+        # Least common multiple
+        lcm = lcm(*list(n_moves.values()))
+        print("LCM", lcm)
