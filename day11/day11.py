@@ -1,30 +1,22 @@
 from collections import defaultdict
 
-def pp(matrix):
-    for row in matrix:
-        for val in row:
-            print(val, end="")
-        print("")
-
 
 def expand_universe(matrix):
+    horizontal_expands = []
+
     out = []
-    for l in matrix:
+    for y, l in enumerate(matrix):
         out += [list(l)]
         if all(n == "." for n in l):
-            out += [list(l)]
+            horizontal_expands += [y]
 
-    x = 0
-
-    while x < len(out[0]):
+    vertical_expands = []
+    for x in range(len(out[0])):
         column = [out[y][x] for y in range(len(out))]
         if all(n == "." for n in column):
-            for row in out:
-                row.insert(x, ".")
-            x += 1
-        x += 1
+            vertical_expands += [x]
 
-    return out
+    return horizontal_expands, vertical_expands
 
 
 def get_galaxy(matrix):
@@ -34,6 +26,7 @@ def get_galaxy(matrix):
             if matrix[y][x] == "#":
                 galaxies += [(y, x)]
     return galaxies
+
 
 def get_pairs(galaxies):
     pairs = set()
@@ -45,11 +38,30 @@ def get_pairs(galaxies):
             pairs.add(pair)
     return pairs
 
-def distance_pair(pair):
+
+def distance_pair(pair, hor_exp, ver_exp):
     g1, g2 = pair
 
-    distance_y = abs(g2[0] - g1[0])
-    distance_x = abs(g2[1] - g1[1])
+    total_y = 0
+    for y in hor_exp:
+        if g2[0] > g1[0]:
+            if g2[0] > y and g1[0] < y:
+                total_y += 1000000 - 1
+        else:
+            if g1[0] > y and g2[0] < y:
+                total_y += 1000000 - 1
+
+    total_x = 0
+    for x in ver_exp:
+        if g2[1] > g1[1]:
+            if g2[1] > x and g1[1] < x:
+                total_x += 1000000 - 1
+        else:
+            if g1[1] > x and g2[1] < x:
+                total_x += 1000000 - 1
+
+    distance_y = total_y + abs(g2[0] - g1[0])
+    distance_x = total_x + abs(g2[1] - g1[1])
     distance = distance_x + distance_y
     print(g1, g2, distance)
     return distance
@@ -58,8 +70,7 @@ def distance_pair(pair):
 if __name__ == "__main__":
     with open("input11.txt", "r") as f:
         matrix = [l.strip() for l in f.readlines()]
-        matrix = expand_universe(matrix)
-        pp(matrix)
+        hor_exp, ver_exp = expand_universe(matrix)
         galaxies = get_galaxy(matrix)
         print(galaxies)
         pairs = get_pairs(galaxies)
@@ -67,5 +78,5 @@ if __name__ == "__main__":
 
         total = 0
         for pair in pairs:
-            total += distance_pair(pair)
+            total += distance_pair(pair, hor_exp, ver_exp)
         print("total", total)
