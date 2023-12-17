@@ -6,6 +6,9 @@ resource.setrlimit(resource.RLIMIT_STACK, [0x10000000, resource.RLIM_INFINITY])
 sys.setrecursionlimit(0x100000)
 
 
+cache = {}
+
+
 def pp(matrix):
     for row in matrix:
         for val in row:
@@ -15,7 +18,7 @@ def pp(matrix):
 
 def debug(matrix, points, latest=None):
     new_matrix = [list(r) for r in matrix]
-    for p in energized_points:
+    for p in points:
         y, x = p
         if p == latest:
             new_matrix[y][x] = "*"
@@ -92,25 +95,13 @@ def move(point, direction):
     raise Exception("Unknown direction")
 
 
-def subset_in_list(subset, list_):
-    if len(subset) < 3:
-        return False
-
-    f = subset[0]
-    indices = [i for i, _ in enumerate(list_) if list_[i] == f]
-    found = 0
-    for start in indices:
-        if subset == list_[start : start + len(subset)]:
-            found += 1
-        if found == 2:
-            return True
-    return False
-
-
-def follow_beam(matrix, energized_points, prev_point, current_point):
+def follow_beam(matrix, prev_point, current_point, local_cache):
     symbol = matrix[current_point[0]][current_point[1]]
 
     points = get_next(prev_point, current_point, symbol)
+
+    local_points = set()
+
     for point in points:
         if (
             point[0] < 0
@@ -121,14 +112,47 @@ def follow_beam(matrix, energized_points, prev_point, current_point):
             # out of bounds
             continue
 
-        if subset_in_list([prev_point, current_point, point], energized_points):
+        tail = (current_point, point)
+        if local_cache.get(tail, 0) >= 2:
             # loop!
             continue
 
-        energized_points.append(point)
-        # print(point)
-        # debug(matrix, energized_points, point)
-        follow_beam(matrix, energized_points, current_point, point)
+        if tail in cache:
+            ppp = cache[tail]
+        else:
+            local_cache[tail] += 1
+            ppp = follow_beam(matrix, current_point, point, local_cache)
+            if len(points) > 1:
+                cache[tail] = ppp
+
+        local_points.add(point)
+        local_points = local_points.union(ppp)
+
+    return local_points
+
+
+def count_energized_tiles(matrix):
+    total = 0
+
+    # perimeter
+    points = (
+        [((-1, x), (0, x)) for x in range(len(matrix[0]))]
+        + [((len(matrix), x), ((len(matrix) - 1, x))) for x in range(len(matrix[0]))]
+        + [((y, -1), (y, 0)) for y in range(len(matrix))]
+        + [((y, len(matrix[0])), (y, len(matrix[0]) - 1)) for y in range(len(matrix))]
+    )
+
+    for i, (prev_point, start_point) in enumerate(points):
+        print(i, start_point)
+        local_cache = defaultdict(int)
+        energized_points = follow_beam(matrix, prev_point, start_point, local_cache)
+        energized_points.add(start_point)
+        count = len(energized_points)
+        if count > total:
+            total = count
+
+    # debug(matrix, energized_points)
+    return total
 
 
 if __name__ == "__main__":
@@ -137,12 +161,5 @@ if __name__ == "__main__":
     with open("input16.txt", "r") as f:
         matrix = [list(r) for r in f.read().strip().split("\n")]
 
-        energized_points = []
-
-        prev_point = (0, -1)
-        current_point = (0, 0)
-        energized_points.append(current_point)
-        follow_beam(matrix, energized_points, prev_point, current_point)
-
-        debug(matrix, energized_points)
-        print(len(set(energized_points)))
+        total = count_energized_tiles(matrix)
+        print(total)
